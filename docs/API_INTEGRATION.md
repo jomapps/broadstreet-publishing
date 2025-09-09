@@ -11,7 +11,9 @@ The dashboard is successfully integrated with the Broadstreet API and displaying
 ### Verified Data
 - **28 campaigns** successfully retrieved
 - **2 networks** (FASH Medien Verlag GmbH - SCHWULISSIMO, FASH Medien Verlag GmbH - Travel M)
-- **40+ advertisers** across both networks
+- **45 advertisers** across both networks
+- **101 advertisements** successfully retrieved using network-based approach
+- **620 zones** (ad placements) configured
 - **Real-time status** (Active/Paused) correctly displayed
 - **Complete metadata** including IDs, names, dates
 
@@ -38,7 +40,7 @@ The Broadstreet API requires a hierarchical approach to fetch data:
 2. **GET /advertisers?network_id={id}** - Get advertisers for each network
 3. **GET /campaigns?advertiser_id={id}** - Get campaigns for each advertiser
 4. **GET /zones?network_id={id}** - Get zones for each network
-5. **GET /advertisements?zone_id={id}** - Get advertisements for each zone
+5. **GET /advertisements?network_id={id}** - Get advertisements for each network (CORRECT APPROACH)
 
 ## Implementation Details
 

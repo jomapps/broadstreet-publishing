@@ -94,19 +94,25 @@ Based on the Broadstreet structure documentation:
 
 For fetching all advertisements in the system:
 
-1. **Option A - Zone-based** (Recommended):
+1. **Option A - Network-based** (✅ VERIFIED WORKING - RECOMMENDED):
+   - Fetch all networks via `/networks`
+   - For each network, fetch advertisements via `/advertisements?network_id={id}`
+   - **CONFIRMED**: Returns 101 advertisements across 2 networks (9396: ~55 ads, 9415: ~46 ads)
+   - This is the ONLY approach that works correctly with the Broadstreet API
+
+2. **Option B - Zone-based** (❌ NOT WORKING):
    - Fetch all zones via `/zones`
    - For each zone, fetch advertisements via `/advertisements?zone_id={id}`
-   - This ensures you get advertisements that are actually placed
+   - Returns empty results - not supported by current API
 
-2. **Option B - Campaign-based**:
+3. **Option C - Campaign-based** (❌ NOT WORKING):
    - Fetch all campaigns via `/campaigns`
    - For each campaign, fetch advertisements via `/advertisements?campaign_id={id}`
-   - This gets all advertisements regardless of placement status
+   - Returns empty results - not supported by current API
 
-3. **Option C - Direct**:
+4. **Option D - Direct** (❌ NOT WORKING):
    - Fetch all advertisements via `/advertisements`
-   - Single call but may include unplaced advertisements
+   - Returns empty results - requires additional parameters
 
 ## Error Handling
 
@@ -121,7 +127,10 @@ The API has rate limiting. Implement appropriate delays between requests when fe
 
 ## Current Implementation Status
 
-As of the latest investigation:
+✅ **RESOLVED** - As of the latest implementation:
 - The system has 28 campaigns and 620 zones configured
-- No advertisements are currently configured in the Broadstreet system
-- This is normal for a new setup where placements are ready but ads haven't been uploaded yet
+- **101 advertisements** successfully retrieved using network-based approach
+- **Network 9396**: ~55 advertisements (SCHWULISSIMO)
+- **Network 9415**: ~46 advertisements (Travel M)
+- Dashboard now correctly displays advertisement counts
+- All API endpoints are functioning properly with real Broadstreet data

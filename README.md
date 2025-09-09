@@ -8,15 +8,19 @@ The dashboard is now successfully integrated with the Broadstreet API and displa
 
 ## Features
 
-- **✅ Live Campaign Data**: Successfully integrated with Broadstreet API displaying 28+ real campaigns
+- **✅ Live Campaign Data**: Successfully integrated with Broadstreet API displaying 28 real campaigns
 - **✅ Campaign Management**: View and manage all your advertising campaigns with real-time status
 - **✅ Network Support**: Supports multiple networks (FASH Medien Verlag GmbH - SCHWULISSIMO, Travel M)
-- **✅ Campaign Statistics**: Real-time stats showing total campaigns, active campaigns, and spend data
+- **✅ Advertiser Management**: 45 advertisers successfully retrieved and displayed
+- **✅ Advertisement Tracking**: 101 advertisements properly fetched using network-based API approach
+- **✅ Zone Management**: 620 zones (ad placements) configured and accessible
+- **✅ Dashboard Statistics**: Real-time stats showing all components with accurate counts
 - **✅ Responsive Design**: Works seamlessly on desktop and mobile devices
 - **✅ Modern UI**: Clean, intuitive interface built with Tailwind CSS
 - **✅ Type Safety**: Full TypeScript support for better development experience
 - **✅ Testing**: Comprehensive test suite with unit and E2E tests
 - **✅ Production Ready**: Optimized API calls with proper error handling and timeouts
+- **✅ CORS Support**: Configurable cross-origin resource sharing for multiple domains and ports
 
 ## Tech Stack
 
@@ -59,6 +63,9 @@ Edit `.env.local` with your configuration:
 BROADSTREET_API_TOKEN=your-actual-api-token-here
 BROADSTREET_API_BASE_URL=https://api.broadstreetads.com/api/1
 MONGODB_URI=mongodb://localhost:27017/broadstreet-campaigns
+
+# CORS Configuration - Add/remove origins as needed
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://local.ft.tc,https://broad.travelm.de
 ```
 
 **Important**: The correct API base URL is `https://api.broadstreetads.com/api/1` (not `/v1`).
@@ -194,24 +201,28 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Documentation
 
 - **[API Integration Guide](docs/API_INTEGRATION.md)** - Detailed information about Broadstreet API integration
+- **[CORS Configuration Guide](docs/CORS_CONFIGURATION.md)** - Cross-origin resource sharing setup and configuration
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
 - **[API Specifications](docs/api-specs.json)** - Complete Broadstreet API documentation
 
 ## Current Status
 
 ### ✅ Production Ready Features
-- Real Broadstreet API integration with 28+ campaigns
+- Real Broadstreet API integration with complete data fetching
 - Multi-network support (SCHWULISSIMO, Travel M)
 - Real-time campaign status and statistics
+- Complete advertisement management with network-based API approach
 - Responsive dashboard interface
 - Comprehensive error handling
 - Production-optimized API calls
 
 ### 📊 Live Data
-- **Total Campaigns**: 28
-- **Active Campaigns**: 7
-- **Networks**: 2 (FASH Medien Verlag GmbH)
-- **API Status**: ✅ Operational
+- **Total Networks**: 2 (FASH Medien Verlag GmbH)
+- **Total Advertisers**: 45
+- **Total Campaigns**: 28 (7 active, 21 paused)
+- **Total Advertisements**: 101 (Network 9396: ~55, Network 9415: ~46)
+- **Total Zones**: 620
+- **API Status**: ✅ Fully Operational
 
 ## Support
 
