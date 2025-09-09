@@ -93,10 +93,77 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(mockZones, { status: 200 });
     }
 
-    // In production, implement proper zone fetching logic here
-    // This would involve calling the Broadstreet API zones endpoint for each network
-    // For now, return empty array as this endpoint needs custom implementation
-    return NextResponse.json([], { status: 200 });
+    // In production, fetch real zones from Broadstreet API
+    try {
+      console.log('Fetching zones from Broadstreet API...');
+      
+      // First, get all networks
+      const networksResponse = await fetch(`${BROADSTREET_API_BASE_URL}/networks?access_token=${BROADSTREET_API_TOKEN}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!networksResponse.ok) {
+        throw new Error(`Networks API error: ${networksResponse.status}`);
+      }
+
+      const networksData = await networksResponse.json();
+      const networks = networksData.networks || [];
+      
+      console.log(`Found ${networks.length} networks`);
+      
+      let allZones: Zone[] = [];
+      
+      // For each network, fetch its zones
+      for (const network of networks) {
+        try {
+          console.log(`Fetching zones for network ${network.id} (${network.name})...`);
+          
+          const zonesResponse = await fetch(`${BROADSTREET_API_BASE_URL}/zones?network_id=${network.id}&access_token=${BROADSTREET_API_TOKEN}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (zonesResponse.ok) {
+            const zonesData = await zonesResponse.json();
+            const networkZones = zonesData.zones || [];
+            
+            // Transform to match our Zone interface
+            const transformedZones = networkZones.map((zone: any) => ({
+              id: zone.id,
+              name: zone.name || `Zone ${zone.id}`,
+              networkId: network.id,
+              type: zone.type || 'banner',
+              width: zone.width || null,
+              height: zone.height || null,
+              status: zone.status || 'active',
+              description: zone.description || '',
+              createdAt: zone.created_at ? new Date(zone.created_at) : new Date(),
+              updatedAt: zone.updated_at ? new Date(zone.updated_at) : new Date(),
+            }));
+            
+            allZones = allZones.concat(transformedZones);
+            console.log(`Found ${networkZones.length} zones for network ${network.id}`);
+          } else {
+            console.warn(`Failed to fetch zones for network ${network.id}: ${zonesResponse.status}`);
+          }
+        } catch (networkError) {
+          console.error(`Error fetching zones for network ${network.id}:`, networkError);
+        }
+      }
+      
+      console.log(`Total zones found: ${allZones.length}`);
+      return NextResponse.json(allZones, { status: 200 });
+      
+    } catch (apiError) {
+      console.error('Error fetching zones from Broadstreet API:', apiError);
+      // Return empty array as fallback
+      return NextResponse.json([], { status: 200 });
+    }
 
     // Example mock data structure for reference (commented out):
     /*

@@ -63,11 +63,75 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(mockAdvertisers, { status: 200 });
     }
 
-    // In production, implement proper advertiser fetching logic here
-    // This would involve calling the Broadstreet API networks endpoint
-    // and then fetching advertisers for each network
-    // For now, return empty array as this endpoint needs custom implementation
-    return NextResponse.json([], { status: 200 });
+    // In production, fetch real advertisers from Broadstreet API
+    try {
+      console.log('Fetching advertisers from Broadstreet API...');
+      
+      // First, get all networks
+      const networksResponse = await fetch(`${BROADSTREET_API_BASE_URL}/networks?access_token=${BROADSTREET_API_TOKEN}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!networksResponse.ok) {
+        throw new Error(`Networks API error: ${networksResponse.status}`);
+      }
+
+      const networksData = await networksResponse.json();
+      const networks = networksData.networks || [];
+      
+      console.log(`Found ${networks.length} networks`);
+      
+      let allAdvertisers: Advertiser[] = [];
+      
+      // For each network, fetch its advertisers
+      for (const network of networks) {
+        try {
+          console.log(`Fetching advertisers for network ${network.id} (${network.name})...`);
+          
+          const advertisersResponse = await fetch(`${BROADSTREET_API_BASE_URL}/advertisers?network_id=${network.id}&access_token=${BROADSTREET_API_TOKEN}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (advertisersResponse.ok) {
+            const advertisersData = await advertisersResponse.json();
+            const networkAdvertisers = advertisersData.advertisers || [];
+            
+            // Transform to match our Advertiser interface
+            const transformedAdvertisers = networkAdvertisers.map((advertiser: any) => ({
+              id: advertiser.id,
+              name: advertiser.name || `Advertiser ${advertiser.id}`,
+              networkId: network.id,
+              status: advertiser.status || 'active',
+              email: advertiser.email || '',
+              phone: advertiser.phone || '',
+              createdAt: advertiser.created_at ? new Date(advertiser.created_at) : new Date(),
+              updatedAt: advertiser.updated_at ? new Date(advertiser.updated_at) : new Date(),
+            }));
+            
+            allAdvertisers = allAdvertisers.concat(transformedAdvertisers);
+            console.log(`Found ${networkAdvertisers.length} advertisers for network ${network.id}`);
+          } else {
+            console.warn(`Failed to fetch advertisers for network ${network.id}: ${advertisersResponse.status}`);
+          }
+        } catch (networkError) {
+          console.error(`Error fetching advertisers for network ${network.id}:`, networkError);
+        }
+      }
+      
+      console.log(`Total advertisers found: ${allAdvertisers.length}`);
+      return NextResponse.json(allAdvertisers, { status: 200 });
+      
+    } catch (apiError) {
+      console.error('Error fetching advertisers from Broadstreet API:', apiError);
+      // Return empty array as fallback
+      return NextResponse.json([], { status: 200 });
+    }
 
     // Example mock data structure for reference (commented out):
     /*
