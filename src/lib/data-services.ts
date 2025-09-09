@@ -48,6 +48,79 @@ async function fetchApi<T>(endpoint: string): Promise<T> {
   }
 }
 
+// Helper function to serialize MongoDB documents to plain objects
+function serializeNetwork(doc: any): Network {
+  return {
+    id: doc.id,
+    name: doc.name,
+    description: doc.description,
+    status: doc.status,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt
+  };
+}
+
+function serializeCampaign(doc: any): Campaign {
+  return {
+    id: doc.id,
+    name: doc.name,
+    status: doc.status,
+    startDate: doc.startDate,
+    endDate: doc.endDate,
+    budget: doc.budget,
+    spent: doc.spent,
+    impressions: doc.impressions,
+    clicks: doc.clicks,
+    ctr: doc.ctr,
+    advertiserId: doc.advertiserId,
+    networkId: doc.networkId
+  };
+}
+
+function serializeAdvertiser(doc: any): Advertiser {
+  return {
+    id: doc.id,
+    name: doc.name,
+    networkId: doc.networkId,
+    status: doc.status,
+    email: doc.email,
+    phone: doc.phone,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt
+  };
+}
+
+function serializeAdvertisement(doc: any): Advertisement {
+  return {
+    id: doc.id,
+    name: doc.name,
+    campaignId: doc.campaignId,
+    advertiserId: doc.advertiserId,
+    networkId: doc.networkId,
+    type: doc.type,
+    status: doc.status,
+    width: doc.width,
+    height: doc.height,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt
+  };
+}
+
+function serializeZone(doc: any): Zone {
+  return {
+    id: doc.id,
+    name: doc.name,
+    networkId: doc.networkId,
+    type: doc.type,
+    width: doc.width,
+    height: doc.height,
+    status: doc.status,
+    description: doc.description,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt
+  };
+}
+
 // Network data service with local database integration
 export async function getNetworks(): Promise<Network[]> {
   try {
@@ -57,10 +130,10 @@ export async function getNetworks(): Promise<Network[]> {
     // Try to get from local database first
     const localNetworks = await networkRepository.findAll({}, { sort: { name: 1 } });
     
-    // If we have local data, return it
+    // If we have local data, serialize and return it
     if (localNetworks.length > 0) {
       console.log(`Retrieved ${localNetworks.length} networks from local database`);
-      return localNetworks;
+      return localNetworks.map(serializeNetwork);
     }
     
     // Fallback to API if no local data
@@ -90,10 +163,10 @@ export async function getCampaigns(): Promise<Campaign[]> {
     // Try to get from local database first
     const localCampaigns = await campaignRepository.findAll({}, { sort: { startDate: -1 } });
     
-    // If we have local data, return it
+    // If we have local data, serialize and return it
     if (localCampaigns.length > 0) {
       console.log(`Retrieved ${localCampaigns.length} campaigns from local database`);
-      return localCampaigns;
+      return localCampaigns.map(serializeCampaign);
     }
     
     // Fallback to API if no local data
@@ -134,10 +207,10 @@ export async function getAdvertisers(networkId?: number): Promise<Advertiser[]> 
       ? await advertiserRepository.getByNetworkId(networkId)
       : await advertiserRepository.findAll({}, { sort: { name: 1 } });
     
-    // If we have local data, return it
+    // If we have local data, serialize and return it
     if (localAdvertisers.length > 0) {
       console.log(`Retrieved ${localAdvertisers.length} advertisers from local database`);
-      return localAdvertisers;
+      return localAdvertisers.map(serializeAdvertiser);
     }
     
     // Fallback to API if no local data
@@ -170,10 +243,10 @@ export async function getAdvertisements(networkId?: number): Promise<Advertiseme
       ? await advertisementRepository.getByNetworkId(networkId)
       : await advertisementRepository.findAll({}, { sort: { name: 1 } });
     
-    // If we have local data, return it
+    // If we have local data, serialize and return it
     if (localAdvertisements.length > 0) {
       console.log(`Retrieved ${localAdvertisements.length} advertisements from local database`);
-      return localAdvertisements;
+      return localAdvertisements.map(serializeAdvertisement);
     }
     
     // Fallback to API if no local data
@@ -206,193 +279,10 @@ export async function getZones(networkId?: number): Promise<Zone[]> {
       ? await zoneRepository.getByNetworkId(networkId)
       : await zoneRepository.findAll({}, { sort: { name: 1 } });
     
-    // If we have local data, return it
+    // If we have local data, serialize and return it
     if (localZones.length > 0) {
       console.log(`Retrieved ${localZones.length} zones from local database`);
-      return localZones;
-    }
-    
-    // Fallback to API if no local data
-    console.log('No local zones found, falling back to API...');
-    const endpoint = networkId ? `/api/zones?network_id=${networkId}` : '/api/zones';
-    const apiZones = await fetchApi<Zone[]>(endpoint);
-    
-    // Trigger background sync to populate local database
-    if (apiZones.length > 0) {
-      syncService.syncZones(networkId).catch(error => {
-        console.error('Background zone sync failed:', error);
-      });
-    }
-    
-    return apiZones;
-  } catch (error) {
-    console.error('Failed to fetch zones:', error);
-    return [];
-  }
-}
-
-// Dashboard summary data service
-export async function getNetworks(): Promise<Network[]> {
-  try {
-    // Ensure database is initialized
-    await initializationService.ensureInitialized();
-    
-    // Try to get from local database first
-    const localNetworks = await networkRepository.findAll({}, { sort: { name: 1 } });
-    
-    // If we have local data, return it
-    if (localNetworks.length > 0) {
-      console.log(`Retrieved ${localNetworks.length} networks from local database`);
-      return localNetworks;
-    }
-    
-    // Fallback to API if no local data
-    console.log('No local networks found, falling back to API...');
-    const apiNetworks = await fetchApi<Network[]>('/api/networks');
-    
-    // Trigger background sync to populate local database
-    if (apiNetworks.length > 0) {
-      syncService.syncNetworks().catch(error => {
-        console.error('Background network sync failed:', error);
-      });
-    }
-    
-    return apiNetworks;
-  } catch (error) {
-    console.error('Failed to fetch networks:', error);
-    return [];
-  }
-}
-
-// Campaign data services
-export async function getCampaigns(): Promise<Campaign[]> {
-  try {
-    // Ensure database is initialized
-    await initializationService.ensureInitialized();
-    
-    // Try to get from local database first
-    const localCampaigns = await campaignRepository.findAll({}, { sort: { startDate: -1 } });
-    
-    // If we have local data, return it
-    if (localCampaigns.length > 0) {
-      console.log(`Retrieved ${localCampaigns.length} campaigns from local database`);
-      return localCampaigns;
-    }
-    
-    // Fallback to API if no local data
-    console.log('No local campaigns found, falling back to API...');
-    const apiCampaigns = await fetchApi<Campaign[]>('/api/campaigns');
-    
-    // Trigger background sync to populate local database
-    if (apiCampaigns.length > 0) {
-      syncService.syncCampaigns().catch(error => {
-        console.error('Background campaign sync failed:', error);
-      });
-    }
-    
-    return apiCampaigns;
-  } catch (error) {
-    console.error('Failed to fetch campaigns:', error);
-    return [];
-  }
-}
-
-export async function getCampaignData(campaignId: number): Promise<CampaignData | null> {
-  try {
-    return await fetchApi<CampaignData>(`/api/campaigns/${campaignId}`);
-  } catch (error) {
-    console.error(`Failed to fetch campaign data for ID ${campaignId}:`, error);
-    return null;
-  }
-}
-
-// Advertiser data service
-export async function getAdvertisers(networkId?: number): Promise<Advertiser[]> {
-  try {
-    // Ensure database is initialized
-    await initializationService.ensureInitialized();
-    
-    // Try to get from local database first
-    const localAdvertisers = networkId 
-      ? await advertiserRepository.getByNetworkId(networkId)
-      : await advertiserRepository.findAll({}, { sort: { name: 1 } });
-    
-    // If we have local data, return it
-    if (localAdvertisers.length > 0) {
-      console.log(`Retrieved ${localAdvertisers.length} advertisers from local database`);
-      return localAdvertisers;
-    }
-    
-    // Fallback to API if no local data
-    console.log('No local advertisers found, falling back to API...');
-    const endpoint = networkId ? `/api/advertisers?network_id=${networkId}` : '/api/advertisers';
-    const apiAdvertisers = await fetchApi<Advertiser[]>(endpoint);
-    
-    // Trigger background sync to populate local database
-    if (apiAdvertisers.length > 0) {
-      syncService.syncAdvertisers(networkId).catch(error => {
-        console.error('Background advertiser sync failed:', error);
-      });
-    }
-    
-    return apiAdvertisers;
-  } catch (error) {
-    console.error('Failed to fetch advertisers:', error);
-    return [];
-  }
-}
-
-// Advertisement data service
-export async function getAdvertisements(networkId?: number): Promise<Advertisement[]> {
-  try {
-    // Ensure database is initialized
-    await initializationService.ensureInitialized();
-    
-    // Try to get from local database first
-    const localAdvertisements = networkId 
-      ? await advertisementRepository.getByNetworkId(networkId)
-      : await advertisementRepository.findAll({}, { sort: { name: 1 } });
-    
-    // If we have local data, return it
-    if (localAdvertisements.length > 0) {
-      console.log(`Retrieved ${localAdvertisements.length} advertisements from local database`);
-      return localAdvertisements;
-    }
-    
-    // Fallback to API if no local data
-    console.log('No local advertisements found, falling back to API...');
-    const endpoint = networkId ? `/api/advertisements?network_id=${networkId}` : '/api/advertisements';
-    const apiAdvertisements = await fetchApi<Advertisement[]>(endpoint);
-    
-    // Trigger background sync to populate local database
-    if (apiAdvertisements.length > 0) {
-      syncService.syncAdvertisements().catch(error => {
-        console.error('Background advertisement sync failed:', error);
-      });
-    }
-    
-    return apiAdvertisements;
-  } catch (error) {
-    console.error('Failed to fetch advertisements:', error);
-    return [];
-  }
-}
-
-// Zone data service
-export async function getZones(networkId?: number): Promise<Zone[]> {
-  try {
-    // Ensure database is initialized
-    await initializationService.ensureInitialized();
-    
-    // Try to get from local database first
-    const localZones = networkId 
-      ? await zoneRepository.getByNetworkId(networkId)
-      : await zoneRepository.findAll({}, { sort: { name: 1 } });
-    
-    // If we have local data, return it
-    if (localZones.length > 0) {
-      console.log(`Retrieved ${localZones.length} zones from local database`);
-      return localZones;
+      return localZones.map(serializeZone);
     }
     
     // Fallback to API if no local data
